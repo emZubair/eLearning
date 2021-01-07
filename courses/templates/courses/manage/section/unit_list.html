@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load course %}
+
+{% block title %}
+  Section {{ section.order|add:1}}: {{section.title}}
+{% endblock %}
+
+{% block content %}
+  {% with course=section.course %}
+    <h1> Course "{{course.title}}"</h1>
+    <div class="contents">
+        <h3>Sections</h3>
+        <ul id="modules">
+            {% for sec in course.sections.all %}
+              <li data-id="{{sec.id}}" {% if sec == section %} class="selected" {%endif%}>
+                  <a href="{% url 'section_unit_list' sec.id %}">
+                      <span>Section <span class="order">
+                          {{sec.order|add:1}}
+                      </span></span><br>
+                      {{sec.title}}
+                  </a>
+              </li>
+            {% empty %}
+              <li>No sections yet.</li>
+            {%endfor%}
+        </ul>
+        <p><a href="{% url 'course_section_update' course.id %}">Edit Sections</a></p>
+    </div>
+    <div class="module">
+        <h2>Section {{section.order|add:1}}: {{section.title}}</h2>
+        <h3>Section contents:</h3>
+
+        <div id="module-contents">
+            {% for unit in section.units.all %}
+              <div data-id="{{unit.id}}">
+                  {% with item=unit.item %}
+                    <p>{{item}} ({{item|model_name}})</p>
+                    <a href="{% url 'section_unit_update' section.id item|model_name item.id %}">Edit</a>
+                    <form action="{% url 'section_unit_delete' unit.id %}" method="post">
+                        <input type="submit" value="Delete">
+                        {% csrf_token %}
+                    </form>
+                  {%endwith%}
+              </div>
+              {% empty %}
+                <p>This section has no units yet.</p>
+            {% endfor %}
+        </div>
+        <h3>Add new Units:</h3>
+        <ul class="content-types">
+            <li><a href="{% url 'section_unit_create' section.id 'text' %}">Text</a></li>
+            <li><a href="{% url 'section_unit_create' section.id 'image' %}">Image</a></li>
+            <li><a href="{% url 'section_unit_create' section.id 'file' %}">File</a></li>
+            <li><a href="{% url 'section_unit_create' section.id 'video' %}">Video</a></li>
+        </ul>
+    </div>
+  {%endwith%}
+{% endblock %}
+
+{% block domready %}
+ $("#modules").sortable({
+    stop: function(event, ui){
+      section_order = {};
+      $("#modules").children().each(function(){
+        // update the order field
+        $(this).find('.order').text($(this).index() + 1 );
+        // associate section's id with its order
+        section_order[$(this).data('id')] = $(this).index();
+      });
+      $.ajax({
+        type: 'POST',
+        url: '{% url 'section_order' %}',
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        data: JSON.stringify(section_order)
+      });
+    }
+ });
+$('module-contents').sortable({
+  stop: function(){
+    unit_order = {}
+    $('module-contents').children().each(function(){
+      unit_order[$(this).data('id')] = $(this).index();
+    });
+    $.ajax({
+      type: 'POST',
+      url: '{% url 'unit_order' %}',
+      dataType: 'json',
+      contentType: 'application/json; charset=utf-8',
+      data: JSON.stringify(unit_order)
+    })
+  }
+})
+{% endblock %}

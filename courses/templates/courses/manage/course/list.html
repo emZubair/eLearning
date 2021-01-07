@@ -12,6 +12,12 @@
                 <p>
                     <a href="{% url 'course_edit' course.id %}">Edit</a>
                     <a href="{% url 'course_delete' course.id %}">Delete</a>
+                    <a href="{% url 'course_section_update' course.id %}">Edit Sections</a>
+                    {% if course.sections.count > 0 %}
+                      <a href="{% url 'section_unit_list' course.sections.first.id %}">
+                          Manage units
+                      </a>
+                    {% endif %}
                 </p>
             </div>
         {% empty %}
