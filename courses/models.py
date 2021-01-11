@@ -6,6 +6,10 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from courses.fields import OrderField
 # Create your models here.
 
+# Subject -> Courses -> Module -> Content
+# Subject -> Courses -> Section -> Units
+# Units -> ContentBase -> Text, video, image, audio
+
 
 class Subject(models.Model):
     title = models.CharField(max_length=100)
