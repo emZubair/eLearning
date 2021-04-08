@@ -2,7 +2,8 @@ from django.urls import path
 from courses.views import (CourseCreateView, CourseDeleteView, CourseUpdateView,
                            ManageCourseListView, CourseSectionUpdateView, UnitCreateUpdateView,
                            UnitDeleteView, SectionUnitListView,
-                           SectionOrderView, UnitOrderView)
+                           SectionOrderView, UnitOrderView,
+                           CourseListView, CourseDetailView)
 
 
 urlpatterns = [
@@ -20,4 +21,7 @@ urlpatterns = [
 
     path('unit/order/', UnitOrderView.as_view(), name='unit_order'),
     path('section/order/', SectionOrderView.as_view(), name='section_order'),
+
+    path('subject/<slug:subject>/', CourseListView.as_view(), name='course_list_subject'),
+    path('<slug:slug>/', CourseDetailView.as_view(), name='course_detail'),
 ]

@@ -4,8 +4,10 @@ from django.shortcuts import redirect, get_object_or_404
 from django.contrib.auth.mixins import (LoginRequiredMixin,
                                         PermissionRequiredMixin)
 from django.apps import apps
+from django.db.models import Count
 from django.views.generic.list import ListView
 from django.forms.models import modelform_factory
+from django.views.generic.detail import DetailView
 from django.views.generic.base import TemplateResponseMixin, View
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
@@ -14,7 +16,8 @@ from braces.views import CsrfExemptMixin, JsonRequestResponseMixin
 
 import logging
 from courses.forms import ModuleFormSet
-from courses.models import Course, Section, Unit
+from students.forms import CourseEnrollForm
+from courses.models import Course, Section, Unit, Subject
 # Create your views here.
 logger = logging.getLogger('zubair')
 MODEL_CHOICES = 'text video image file'
@@ -103,8 +106,8 @@ class CourseSectionUpdateView(TemplateResponseMixin, View):
 
 class UnitCreateUpdateView(TemplateResponseMixin, View):
     section = None
-    model = None
-    obj = None
+    model = None    # model name i.e Image, Video
+    obj = None      # instance of object i.e Image object
     template_name = 'courses/manage/content/form.html'
 
     @staticmethod
@@ -189,3 +192,35 @@ class UnitOrderView(CsrfExemptMixin, JsonRequestResponseMixin, View):
                 id=id, section__course__author=request.user,
             ).update(order=order)
         return self.render_json_response({'saved': 'OK'})
+
+
+class CourseListView(TemplateResponseMixin, View):
+    model = Course
+    template_name = 'courses/course/list.html'
+
+    def get(self, request, subject=None):
+        subjects = Subject.objects.annotate(
+            total_courses=Count('courses'))
+        courses = Course.objects.annotate(
+            total_sections=Count('sections'))
+        if subject:
+            subject = get_object_or_404(Subject, slug=subject)
+            courses = courses.filter(subject=subject)
+        li = {'one': 2324, 'two': 947}
+        return self.render_to_response({
+            'subjects': subjects,
+            'subject': subject,
+            'courses': courses,
+            'li': li
+        })
+
+
+class CourseDetailView(DetailView):
+    model = Course
+    template_name = 'courses/course/detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['enroll_form'] = CourseEnrollForm(
+            initial={'course': self.object}
+        )
