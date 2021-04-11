@@ -1,3 +1,8 @@
-from django.test import TestCase
+from django.test import TestCase, Client
 
-# Create your tests here.
+
+class TestRedirection(TestCase):
+    def testDefaultPageLoading(self):
+        client = Client()
+        response = client.get('')
+        self.assertTemplateUsed(response, "courses/course/list.html", "correct template is loaded")
